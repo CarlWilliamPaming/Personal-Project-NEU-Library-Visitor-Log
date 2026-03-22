@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEU Library — Admin Dashboard</title>
+  <link rel="icon" type="image/png" href="neu-logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --teal:       #0a6e6e;
+      --teal-dark:  #075555;
+      --teal-light: #e6f4f4;
+      --navy:       #0f1f3d;
+      --navy-light: #1e3a6e;
+      --gold:       #d4a843;
+      --sidebar-bg: #0d1825;
+      --sidebar-w:  260px;
+      --white:      #fff;
+      --off-white:  #f7fafa;
+      --gray-100:   #f0f5f5;
+      --gray-200:   #dde8e8;
+      --gray-400:   #8aa8a8;
+      --gray-600:   #4a6868;
+      --gray-900:   #1a2e2e;
+      --danger:     #e53e3e;
+      --success:    #1a7a34;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body:    'Inter', sans-serif;
+      --r: 12px; --r-lg: 18px;
+      --shadow: 0 4px 24px rgba(0,0,0,.09);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--off-white); font-family: var(--font-body); color: var(--gray-900); }
+
+    
+    .layout { display: flex; min-height: 100vh; }
+
+    
+    .sidebar {
+      width: var(--sidebar-w); background: var(--sidebar-bg);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+      padding: 0;
+    }
+    .sidebar-brand {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .sidebar-logo {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: contain;
+      border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); padding: 3px;
+    }
+    .sidebar-brand-text { line-height: 1.25; }
+    .sidebar-brand-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff; }
+    .sidebar-brand-sub   { font-size: 10px; color: rgba(255,255,255,.4); letter-spacing: .6px; text-transform: uppercase; }
+
+    .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .nav-section-label {
+      font-size: 10px; font-weight: 600; color: rgba(255,255,255,.25);
+      text-transform: uppercase; letter-spacing: 1px; padding: 12px 12px 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: 10px; cursor: pointer;
+      font-size: 14px; font-weight: 500; color: rgba(255,255,255,.55);
+      transition: all .2s; text-decoration: none; border: none; background: none;
+      font-family: var(--font-body); width: 100%; text-align: left;
+    }
+    .nav-item:hover  { background: rgba(255,255,255,.07); color: rgba(255,255,255,.9); }
+    .nav-item.active { background: rgba(10,110,110,.35); color: #fff; }
+    .nav-item.active .nav-icon { opacity: 1; }
+    .nav-icon { font-size: 16px; opacity: .6; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 16px; border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .admin-chip {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(255,255,255,.06);
+    }
+    .admin-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal), var(--navy-light));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .admin-info { flex: 1; min-width: 0; }
+    .admin-name  { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-role  { font-size: 11px; color: rgba(255,255,255,.4); }
+    .btn-signout {
+      background: rgba(229,62,62,.15); border: 1px solid rgba(229,62,62,.3);
+      color: #fc8181; border-radius: 8px; padding: 6px 10px;
+      font-size: 12px; font-weight: 600; font-family: var(--font-body);
+      cursor: pointer; transition: all .2s; flex-shrink: 0;
+    }
+    .btn-signout:hover { background: rgba(229,62,62,.3); }
+
+    
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    
+    .topbar {
+      background: #fff; border-bottom: 1px solid var(--gray-200);
+      padding: 0 32px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 1px 8px rgba(0,0,0,.05);
+    }
+    .topbar-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--teal-dark); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-date  { font-size: 13px; color: var(--gray-400); }
+    .btn-kiosk {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--teal-light); color: var(--teal); border: 1.5px solid var(--teal);
+      padding: 8px 16px; border-radius: 50px; font-size: 13px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: all .2s; text-decoration: none;
+    }
+    .btn-kiosk:hover { background: var(--teal); color: #fff; }
+
+    
+    .content { padding: 28px 32px 48px; flex: 1; }
+
+    
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeUp .35s ease both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px; }
+    .stat-card {
+      background: #fff; border-radius: var(--r-lg); padding: 24px 22px;
+      box-shadow: var(--shadow); border: 1px solid var(--gray-200);
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .stat-card:nth-child(1)::before { background: linear-gradient(90deg, #0a6e6e, #0d8888); }
+    .stat-card:nth-child(2)::before { background: linear-gradient(90deg, #1e3a6e, #2a5298); }
+    .stat-card:nth-child(3)::before { background: linear-gradient(90deg, #d4a843, #f0c96a); }
+    .stat-card:nth-child(4)::before { background: linear-gradient(90deg, #1a7a34, #28a745); }
+    .stat-icon  { font-size: 22px; margin-bottom: 12px; }
+    .stat-num   { font-family: var(--font-display); font-size: 38px; font-weight: 800; color: var(--teal); line-height: 1; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: var(--gray-400); text-transform: uppercase; letter-spacing: .6px; }
+
+    
+    .chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 28px; }
+    .card {
+      background: #fff; border-radius: var(--r-lg); padding: 24px;
+      box-shadow: var(--shadow); border: 1px solid var(--gray-200);
+    }
+    .card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--teal-dark); margin-bottom: 20px; }
+
+    
+    .donut-wrap  { display: flex; align-items: center; gap: 24px; }
+    .donut-chart { width: 140px; height: 140px; flex-shrink: 0; }
+    .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--gray-600); }
+    .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    
+    .breakdown-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 28px; }
+    .breakdown-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .breakdown-label { flex: 1; font-size: 13px; color: var(--gray-600); }
+    .breakdown-bar-wrap { flex: 2; background: var(--gray-100); border-radius: 50px; height: 6px; overflow: hidden; }
+    .breakdown-bar { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--teal), var(--navy-light)); transition: width .6s ease; }
+    .breakdown-count { font-size: 12px; font-weight: 700; color: var(--teal); min-width: 28px; text-align: right; }
+
+    
+    .controls-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .search-input {
+      flex: 1; min-width: 220px; padding: 11px 16px;
+      border: 1.5px solid var(--gray-200); border-radius: 10px;
+      font-size: 14px; font-family: var(--font-body); outline: none; background: #fff;
+    }
+    .search-input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(10,110,110,.08); }
+    .filter-select {
+      padding: 11px 14px; border: 1.5px solid var(--gray-200); border-radius: 10px;
+      font-size: 14px; font-family: var(--font-body); outline: none; background: #fff; color: var(--gray-900);
+    }
+    .filter-select:focus { border-color: var(--teal); }
+    .btn-primary {
+      background: var(--teal); color: #fff; border: none;
+      padding: 11px 22px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: background .2s;
+    }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-outline {
+      background: var(--teal-light); color: var(--teal); border: 1.5px solid var(--teal);
+      padding: 11px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .btn-outline:hover { background: var(--teal); color: #fff; }
+
+    
+    .table-wrap { overflow-x: auto; background: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow); border: 1px solid var(--gray-200); }
+    .records-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .records-table thead { background: linear-gradient(90deg, var(--teal) 0%, var(--navy-light) 100%); }
+    .records-table th { padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; letter-spacing: .6px; white-space: nowrap; }
+    .records-table td { padding: 12px 16px; border-bottom: 1px solid var(--gray-100); color: var(--gray-900); }
+    .records-table tbody tr:hover { background: var(--teal-light); }
+    .records-table tbody tr:last-child td { border-bottom: none; }
+    .records-table tbody tr.row-blocked td { background: #fff5f5; color: var(--gray-400); }
+    .loading-row { text-align: center; color: var(--gray-400); font-style: italic; padding: 40px !important; }
+
+    .badge { background: var(--teal-light); color: var(--teal-dark); padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .status-pill { padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 700; }
+    .status-pill.active  { background: #e8f5e9; color: var(--success); }
+    .status-pill.blocked { background: #fff0f0; color: var(--danger); }
+
+    .btn-sm { padding: 5px 11px; border: none; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: opacity .2s; margin: 1px; }
+    .btn-sm:hover   { opacity: .8; }
+    .btn-sm.danger  { background: #fff0f0; color: var(--danger); }
+    .btn-sm.success { background: #e8f5e9; color: var(--success); }
+    .btn-sm.neutral { background: var(--gray-100); color: var(--gray-600); }
+
+    .pagination-row { display: flex; gap: 6px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+    .page-btn { padding: 8px 14px; border: 1.5px solid var(--gray-200); border-radius: 8px; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+    .page-btn:hover  { border-color: var(--teal); color: var(--teal); }
+    .page-btn.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+    
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: var(--r-lg); padding: 32px;
+      max-width: 400px; width: 90%; box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      animation: fadeUp .3s ease;
+    }
+    .modal h3 { font-family: var(--font-display); font-size: 20px; margin-bottom: 10px; color: var(--gray-900); }
+    .modal p  { font-size: 14px; color: var(--gray-600); margin-bottom: 24px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel { background: var(--gray-100); color: var(--gray-600); border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; }
+    .btn-confirm { background: var(--danger); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; }
+
+    
+    .not-auth {
+      display: none; flex: 1; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0d1825 0%, #1e3a6e 100%);
+      min-height: 100vh;
+    }
+    .not-auth.show { display: flex; }
+    .not-auth-card {
+      background: #fff; border-radius: var(--r-lg); padding: 48px 40px;
+      text-align: center; max-width: 400px; width: 90%;
+      box-shadow: 0 24px 80px rgba(0,0,0,.4);
+    }
+    .not-auth-card img { width: 80px; height: 80px; border-radius: 50%; object-fit: contain; margin: 0 auto 16px; display: block; }
+    .not-auth-card h2 { font-family: var(--font-display); font-size: 22px; color: var(--teal-dark); margin-bottom: 8px; }
+    .not-auth-card p  { font-size: 14px; color: var(--gray-400); margin-bottom: 24px; }
+    .btn-google {
+      display: flex; align-items: center; gap: 12px; justify-content: center;
+      background: #fff; color: #3c4043; border: 1.5px solid #dadce0;
+      padding: 13px 24px; border-radius: 50px; font-size: 15px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; width: 100%;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: box-shadow .2s;
+    }
+    .btn-google:hover { box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1024px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-row { grid-template-columns: 1fr; }
+      .breakdown-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .controls-row { flex-direction: column; }
+      .controls-row .search-input,
+      .controls-row .filter-select,
+      .controls-row button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="not-auth" id="notAuth">
+  <div class="not-auth-card">
+    <img src="neu-logo.png" alt="NEU" onerror="this.style.display='none'" />
+    <h2>Admin Access Required</h2>
+    <p>Sign in with your Google account to access the NEU Library admin dashboard.</p>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+    <br>
+    <a href="index.html" style="font-size:13px;color:var(--gray-400);text-decoration:none;">← Back to Kiosk</a>
+  </div>
+</div>
+
+<div class="layout" id="dashLayout" style="display:none">
+
+  
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="neu-logo.png" alt="NEU" class="sidebar-logo" onerror="this.style.display='none'" />
+      <div class="sidebar-brand-text">
+        <div class="sidebar-brand-title">NEU Library</div>
+        <div class="sidebar-brand-sub">Admin Portal</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <button class="nav-item active" onclick="switchPanel('dashboard', this)">
+        <span class="nav-icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="switchPanel('records', this)">
+        <span class="nav-icon">📋</span> Visitor Records
+      </button>
+      <button class="nav-item" onclick="switchPanel('blocked', this)">
+        <span class="nav-icon">🚫</span> Blocked Visitors
+      </button>
+
+      <div class="nav-section-label" style="margin-top:8px">Tools</div>
+      <button class="nav-item" onclick="exportPDF()">
+        <span class="nav-icon">⬇️</span> Export PDF
+      </button>
+      <button class="nav-item" onclick="printReport()">
+        <span class="nav-icon">🖨️</span> Print Report
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-chip">
+        <div class="admin-avatar" id="adminAvatar">A</div>
+        <div class="admin-info">
+          <div class="admin-name" id="adminName">Admin</div>
+          <div class="admin-role">Library Staff</div>
+        </div>
+        <button class="btn-signout" onclick="signOut()">Out</button>
+      </div>
+    </div>
+  </aside>
+
+  
+  <div class="main">
+    
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Dashboard Overview</div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <a href="index.html" class="btn-kiosk">← Kiosk</a>
+      </div>
+    </div>
+
+    
+    <div class="content">
+
+      
+      <div class="panel active" id="panel-dashboard">
+
+        
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-num" id="s-today">—</div>
+            <div class="stat-label">Today's Visitors</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📆</div>
+            <div class="stat-num" id="s-week">—</div>
+            <div class="stat-label">This Week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🗓️</div>
+            <div class="stat-num" id="s-month">—</div>
+            <div class="stat-label">This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-num" id="s-total">—</div>
+            <div class="stat-label">Total All Time</div>
+          </div>
+        </div>
+
+        
+        <div class="chart-row">
+          <div class="card">
+            <div class="card-title">📈 Visitor Traffic — Last 14 Days</div>
+            <canvas id="lineChart" height="100"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-title">🎯 Purpose of Visit</div>
+            <div class="donut-wrap">
+              <canvas id="donutChart" class="donut-chart"></canvas>
+              <div class="donut-legend" id="donutLegend"></div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="breakdown-row">
+          <div class="card">
+            <div class="card-title">🏫 Top Colleges</div>
+            <div id="collegeBreakdown"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">👤 User Types</div>
+            <div id="typeBreakdown"></div>
+          </div>
+        </div>
+
+      </div>
+
+      
+      <div class="panel" id="panel-records">
+        <div class="controls-row">
+          <input type="text" id="recSearch" class="search-input" placeholder="Search name, email, program…" />
+          <select id="recDateQuick" class="filter-select">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+          <input type="date" id="recFrom" class="filter-select" title="From" />
+          <input type="date" id="recTo"   class="filter-select" title="To" />
+          <button class="btn-primary" onclick="loadRecords()">Filter</button>
+          <button class="btn-outline" onclick="exportPDF()">⬇ PDF</button>
+          <button class="btn-outline" onclick="printReport()">🖨 Print</button>
+        </div>
+        <div class="table-wrap">
+          <table class="records-table">
+            <thead>
+              <tr><th>#</th><th>Name</th><th>Program</th><th>Email</th><th>Type</th><th>Purpose</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="recordsBody">
+              <tr><td colspan="10" class="loading-row">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-row" id="recPagination"></div>
+      </div>
+
+      
+      <div class="panel" id="panel-blocked">
+        <div class="controls-row">
+          <input type="text" id="blkSearch" class="search-input" placeholder="Search blocked visitors…" />
+          <button class="btn-primary" onclick="loadBlocked()">Search</button>
+        </div>
+        <div class="table-wrap">
+          <table class="records-table">
+            <thead>
+              <tr><th>#</th><th>Name</th><th>Program</th><th>Email</th><th>Type</th><th>Date Blocked</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="blockedBody">
+              <tr><td colspan="7" class="loading-row">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm Action</h3>
+    <p id="modalBody">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" id="modalConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const SB_URL = SUPABASE_URL;
+const SB_KEY = SUPABASE_ANON_KEY;
+
+const ADMIN_WHITELIST = [
+  "carlwilliam.paming@neu.edu.ph",
+  "jcesperanza@neu.edu.ph",
+  "ezekielkayl.peralta@neu.edu.ph"
+];
+function isAdminAllowed(email) {
+  return ADMIN_WHITELIST.includes((email || "").toLowerCase().trim());
+}
+
+function sbHeaders(token) {
+  return {
+    "Content-Type": "application/json",
+    "apikey": SB_KEY,
+    "Authorization": `Bearer ${token || SB_KEY}`,
+    "Prefer": "return=representation"
+  };
+}
+async function sbGet(path, token) {
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, { headers: sbHeaders(token) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbPatch(path, body, token) {
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, { method: "PATCH", headers: sbHeaders(token), body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(path, token) {
+  const r = await fetch(`${SB_URL}/rest/v1/${path}`, { method: "DELETE", headers: sbHeaders(token) });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+const todayStr  = () => new Date().toISOString().slice(0, 10);
+const weekStart = () => { const d = new Date(); d.setDate(d.getDate()-d.getDay()); return d.toISOString().slice(0,10); };
+const monthStart= () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-01`; };
+
+let currentToken = null;
+let currentUser  = null;
+let allRows = [];
+
+async function handleOAuthCallback() {
+  const hash   = window.location.hash;
+  const params = new URLSearchParams(hash.replace("#","?"));
+  const token  = params.get("access_token");
+  if (!token) return false;
+  history.replaceState(null,"",window.location.pathname);
+  const r = await fetch(`${SB_URL}/auth/v1/user`, { headers: { apikey: SB_KEY, Authorization: `Bearer ${token}` } });
+  if (!r.ok) return false;
+  const u = await r.json();
+  sessionStorage.setItem("admin_logged_in","true");
+  sessionStorage.setItem("admin_email", u.email||"");
+  sessionStorage.setItem("admin_token", token);
+  return true;
+}
+
+function signInWithGoogle() {
+  const redirectTo = window.location.origin + "/admin-dashboard.html";
+  window.location.href = `${SB_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+}
+
+async function signOut() {
+  const token = sessionStorage.getItem("admin_token");
+  if (token) await fetch(`${SB_URL}/auth/v1/logout`, { method:"POST", headers:{ apikey:SB_KEY, Authorization:`Bearer ${token}` } }).catch(()=>{});
+  sessionStorage.clear();
+  window.location.href = "index.html";
+}
+
+function showDash(email, token) {
+  currentToken = token;
+  currentUser  = email;
+  document.getElementById("notAuth").classList.remove("show");
+  document.getElementById("dashLayout").style.display = "flex";
+  
+  const name   = email.split("@")[0].replace(/\./g," ").replace(/\b\w/g, c=>c.toUpperCase());
+  document.getElementById("adminName").textContent   = name;
+  document.getElementById("adminAvatar").textContent = name.charAt(0).toUpperCase();
+  document.getElementById("topbarDate").textContent  = new Date().toLocaleDateString("en-PH", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  loadDashboard();
+  loadRecords();
+}
+
+function switchPanel(id, btn) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById(`panel-${id}`).classList.add("active");
+  btn.classList.add("active");
+  const titles = { dashboard:"Dashboard Overview", records:"Visitor Records", blocked:"Blocked Visitors" };
+  document.getElementById("topbarTitle").textContent = titles[id] || id;
+  if (id === "blocked") loadBlocked();
+}
+
+async function loadDashboard() {
+  try {
+    const [all, todayR, weekR, monthR] = await Promise.all([
+      sbGet("visitors?select=id"),
+      sbGet(`visitors?select=id&visit_date=eq.${todayStr()}`),
+      sbGet(`visitors?select=id&visit_date=gte.${weekStart()}`),
+      sbGet(`visitors?select=id&visit_date=gte.${monthStart()}`)
+    ]);
+    document.getElementById("s-today").textContent  = todayR.length;
+    document.getElementById("s-week").textContent   = weekR.length;
+    document.getElementById("s-month").textContent  = monthR.length;
+    document.getElementById("s-total").textContent  = all.length;
+  } catch(e) { console.error(e); }
+
+  
+  try {
+    const rows = await sbGet("visitors?select=visit_date,reason,user_type,program&order=visit_date.desc&limit=500");
+    buildLineChart(rows);
+    buildDonutChart(rows);
+    buildBreakdowns(rows);
+  } catch(e) { console.error(e); }
+}
+
+function buildLineChart(rows) {
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  const counts = days.map(d => rows.filter(r => r.visit_date === d).length);
+  const ctx = document.getElementById("lineChart").getContext("2d");
+  if (window._lineChart) window._lineChart.destroy();
+  window._lineChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: days.map(d => { const dt=new Date(d+"T00:00:00"); return dt.toLocaleDateString("en-PH",{month:"short",day:"numeric"}); }),
+      datasets: [{ label:"Visitors", data: counts,
+        borderColor:"#0a6e6e", backgroundColor:"rgba(10,110,110,.08)",
+        borderWidth:2.5, pointRadius:4, pointBackgroundColor:"#0a6e6e",
+        fill:true, tension:.4 }]
+    },
+    options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, ticks:{stepSize:1} } } }
+  });
+}
+
+const REASON_COLORS = ["#0a6e6e","#1e3a6e","#d4a843","#1a7a34","#e53e3e","#805ad5","#dd6b20","#319795","#b83280"];
+function buildDonutChart(rows) {
+  const counts = {};
+  rows.forEach(r => { counts[r.reason] = (counts[r.reason]||0)+1; });
+  const labels = Object.keys(counts);
+  const data   = labels.map(l => counts[l]);
+  const ctx    = document.getElementById("donutChart").getContext("2d");
+  if (window._donut) window._donut.destroy();
+  window._donut = new Chart(ctx, {
+    type:"doughnut",
+    data:{ labels, datasets:[{ data, backgroundColor: labels.map((_,i)=>REASON_COLORS[i%REASON_COLORS.length]), borderWidth:2, borderColor:"#fff" }] },
+    options:{ responsive:false, plugins:{ legend:{display:false} }, cutout:"68%" }
+  });
+  const legend = document.getElementById("donutLegend");
+  legend.innerHTML = labels.map((l,i) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${REASON_COLORS[i%REASON_COLORS.length]}"></div><span>${l}</span><strong style="margin-left:auto;color:#1a2e2e">${counts[l]}</strong></div>`
+  ).join("");
+}
+
+function buildBreakdowns(rows) {
+  
+  const cols={};
+  rows.forEach(r=>{ if(r.program){ const k=r.program; cols[k]=(cols[k]||0)+1; } });
+  const topCols=Object.entries(cols).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxC=topCols[0]?.[1]||1;
+  document.getElementById("collegeBreakdown").innerHTML = topCols.map(([k,v])=>`
+    <div class="breakdown-item">
+      <div class="breakdown-label">${k.length>28?k.slice(0,26)+"…":k}</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round(v/maxC*100)}%"></div></div>
+      <div class="breakdown-count">${v}</div>
+    </div>`).join("") || "<div style='font-size:13px;color:#8aa8a8'>No data yet.</div>";
+
+  
+  const types={};
+  rows.forEach(r=>{ if(r.user_type){ types[r.user_type]=(types[r.user_type]||0)+1; } });
+  const typeList=Object.entries(types).sort((a,b)=>b[1]-a[1]);
+  const maxT=typeList[0]?.[1]||1;
+  document.getElementById("typeBreakdown").innerHTML = typeList.map(([k,v])=>`
+    <div class="breakdown-item">
+      <div class="breakdown-label">${k}</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round(v/maxT*100)}%"></div></div>
+      <div class="breakdown-count">${v}</div>
+    </div>`).join("") || "<div style='font-size:13px;color:#8aa8a8'>No data yet.</div>";
+}
+
+const PER_PAGE = 15;
+let recPage = 1;
+
+async function loadRecords(page=1) {
+  recPage = page;
+  const q    = document.getElementById("recSearch").value.trim();
+  const dq   = document.getElementById("recDateQuick").value;
+  const from = document.getElementById("recFrom").value;
+  const to   = document.getElementById("recTo").value;
+  const tbody= document.getElementById("recordsBody");
+  tbody.innerHTML = `<tr><td colspan="10" class="loading-row">Loading…</td></tr>`;
+
+  try {
+    let params = "visitors?select=*&order=created_at.desc";
+    if (!from && !to) {
+      if      (dq==="today") params+=`&visit_date=eq.${todayStr()}`;
+      else if (dq==="week")  params+=`&visit_date=gte.${weekStart()}`;
+      else if (dq==="month") params+=`&visit_date=gte.${monthStart()}`;
+    }
+    if (from) params+=`&visit_date=gte.${from}`;
+    if (to)   params+=`&visit_date=lte.${to}`;
+    let rows = await sbGet(params);
+    if (q) { const ql=q.toLowerCase(); rows=rows.filter(r=>(r.name||"").toLowerCase().includes(ql)||(r.email||"").toLowerCase().includes(ql)||(r.program||"").toLowerCase().includes(ql)); }
+    allRows = rows;
+    renderRecords(rows, page, tbody, "recPagination", loadRecords, false);
+  } catch(e) {
+    tbody.innerHTML=`<tr><td colspan="10" class="loading-row">Error loading.</td></tr>`;
+    console.error(e);
+  }
+}
+
+function renderRecords(all, page, tbody, paginId, cb, blockedOnly) {
+  const start=(page-1)*PER_PAGE;
+  const rows=all.slice(start,start+PER_PAGE);
+  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="${blockedOnly?7:10}" class="loading-row">No records found.</td></tr>`; document.getElementById(paginId).innerHTML=""; return; }
+  if(blockedOnly) {
+    tbody.innerHTML=rows.map((r,i)=>`
+      <tr>
+        <td>${start+i+1}</td><td>${esc(r.name)}</td><td>${esc(r.program||"—")}</td>
+        <td>${esc(r.email||"—")}</td><td>${esc(r.user_type||"—")}</td>
+        <td>${r.visit_date}</td>
+        <td><button class="btn-sm success" onclick="unblockVisitor('${r.id}')">Unblock</button>
+            <button class="btn-sm neutral" onclick="confirmDelete('${r.id}')">Delete</button></td>
+      </tr>`).join("");
+  } else {
+    tbody.innerHTML=rows.map((r,i)=>`
+      <tr class="${r.status==="blocked"?"row-blocked":""}">
+        <td>${start+i+1}</td><td>${esc(r.name)}</td><td>${esc(r.program||"—")}</td>
+        <td>${esc(r.email||"—")}</td><td>${esc(r.user_type||"—")}</td>
+        <td><span class="badge">${esc(r.reason)}</span></td>
+        <td>${r.visit_date}</td><td>${r.visit_time?r.visit_time.slice(0,5):"—"}</td>
+        <td><span class="status-pill ${r.status||"active"}">${r.status||"active"}</span></td>
+        <td>
+          ${(r.status||"active")==="active"
+            ?`<button class="btn-sm danger" onclick="confirmBlock('${r.id}')">Block</button>`
+            :`<button class="btn-sm success" onclick="unblockVisitor('${r.id}')">Unblock</button>`}
+          <button class="btn-sm neutral" onclick="confirmDelete('${r.id}')">Delete</button>
+        </td>
+      </tr>`).join("");
+  }
+  renderPagination(all.length, page, paginId, cb);
+}
+
+function renderPagination(total, cur, id, cb) {
+  const pages=Math.ceil(total/PER_PAGE);
+  const el=document.getElementById(id);
+  if(pages<=1){el.innerHTML="";return;}
+  el.innerHTML=Array.from({length:pages},(_,i)=>
+    `<button class="page-btn ${i+1===cur?"active":""}" onclick="${cb.name}(${i+1})">${i+1}</button>`
+  ).join("");
+}
+
+async function loadBlocked() {
+  const q=document.getElementById("blkSearch").value.trim();
+  const tbody=document.getElementById("blockedBody");
+  tbody.innerHTML=`<tr><td colspan="7" class="loading-row">Loading…</td></tr>`;
+  try {
+    let rows=await sbGet("visitors?select=*&status=eq.blocked&order=created_at.desc");
+    if(q){const ql=q.toLowerCase();rows=rows.filter(r=>(r.name||"").toLowerCase().includes(ql)||(r.email||"").toLowerCase().includes(ql));}
+    renderRecords(rows,1,tbody,"blkPagination",loadBlocked,true);
+  } catch(e){tbody.innerHTML=`<tr><td colspan="7" class="loading-row">Error.</td></tr>`;}
+}
+
+function confirmBlock(id) {
+  openModal("Block Visitor","This visitor will be denied entry on their next check-in attempt.",()=>blockVisitor(id));
+}
+function confirmDelete(id) {
+  openModal("Delete Record","This record will be permanently deleted. This cannot be undone.",()=>deleteVisitor(id),true);
+}
+async function blockVisitor(id) {
+  closeModal();
+  await sbPatch(`visitors?id=eq.${id}`,{status:"blocked"},currentToken);
+  loadRecords(recPage); loadDashboard();
+}
+async function unblockVisitor(id) {
+  await sbPatch(`visitors?id=eq.${id}`,{status:"active"},currentToken);
+  loadRecords(recPage); loadBlocked();
+}
+async function deleteVisitor(id) {
+  closeModal();
+  await sbDelete(`visitors?id=eq.${id}`,currentToken);
+  loadRecords(recPage); loadDashboard();
+}
+
+let _modalCb=null;
+function openModal(title,body,cb,danger=false) {
+  document.getElementById("modalTitle").textContent=title;
+  document.getElementById("modalBody").textContent=body;
+  document.getElementById("modalConfirm").style.background=danger?"#e53e3e":"#0a6e6e";
+  _modalCb=cb;
+  document.getElementById("confirmModal").classList.add("open");
+}
+function closeModal(){ document.getElementById("confirmModal").classList.remove("open"); _modalCb=null; }
+document.getElementById("modalConfirm").onclick=()=>{ if(_modalCb)_modalCb(); };
+
+let _searchTimeout;
+document.getElementById("recSearch").addEventListener("input", (e) => {
+  clearTimeout(_searchTimeout);
+  _searchTimeout = setTimeout(() => {
+    const q = e.target.value.toLowerCase().trim();
+    if (!adminRows.length) return;
+    const filtered = !q ? adminRows : adminRows.filter(r =>
+      (r.name     || "").toLowerCase().includes(q) ||
+      (r.email    || "").toLowerCase().includes(q) ||
+      (r.program  || "").toLowerCase().includes(q) ||
+      (r.reason   || "").toLowerCase().includes(q) ||
+      (r.user_type|| "").toLowerCase().includes(q)
+    );
+    recPage = 1;
+    renderRecords(filtered, 1,
+      document.getElementById("recordsBody"),
+      "recPagination", loadRecords, false
+    );
+  }, 200);
+});
+
+function exportPDF() {
+  if (!allRows.length) { alert("No records to export."); return; }
+  const rows = allRows.map((r, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${esc(r.name)}</td>
+      <td>${esc(r.program||"—")}</td>
+      <td>${esc(r.email||"—")}</td>
+      <td>${esc(r.user_type||"—")}</td>
+      <td>${esc(r.reason)}</td>
+      <td>${r.visit_date}</td>
+      <td>${r.visit_time ? r.visit_time.slice(0,5) : "—"}</td>
+      <td><span class="${(r.status||"active")==="blocked"?"status-blocked":"status-active"}">${r.status||"active"}</span></td>
+    </tr>`).join("");
+
+  const win = window.open("", "_blank");
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>NEU Library — Visitor Report</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; padding: 32px; color: #1a2e2e; }
+    .report-header { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
+    .report-logo { width: 60px; height: 60px; border-radius: 50%; object-fit: contain; }
+    .report-header-text h1 { font-size: 20px; color: #0a6e6e; font-family: Georgia, serif; font-weight: 700; }
+    .report-header-text p  { font-size: 11px; color: #666; margin-top: 3px; }
+    .report-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; color: #666;
+      border-top: 2.5px solid #0a6e6e; border-bottom: 1px solid #dde8e8;
+      padding: 8px 0; margin-bottom: 18px;
+    }
+    .report-meta strong { color: #0a6e6e; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: #0a6e6e; }
+    th { padding: 9px 10px; text-align: left; font-size: 10px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #f5fafa; }
+    .status-active  { background: #e8f5e9; color: #1a7a34; padding: 2px 8px; border-radius: 50px; font-weight: 700; font-size: 10px; }
+    .status-blocked { background: #fff0f0; color: #e53e3e; padding: 2px 8px; border-radius: 50px; font-weight: 700; font-size: 10px; }
+    .report-footer { margin-top: 24px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 12px; }
+    @media print { .no-print { display: none !important; } body { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <div class="report-header">
+    <img src="neu-logo.png" class="report-logo" alt="NEU" onerror="this.style.display='none'" />
+    <div class="report-header-text">
+      <h1>NEU Library — Visitor Report</h1>
+      <p>New Era University · Library Services · No. 9 Central Ave, New Era, Quezon City</p>
+    </div>
+  </div>
+  <div class="report-meta">
+    <span>Generated: <strong>${new Date().toLocaleString("en-PH", { dateStyle:"full", timeStyle:"short" })}</strong></span>
+    <span>Total Records: <strong>${allRows.length}</strong></span>
+  </div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Name</th><th>Program / Dept.</th><th>Email</th><th>Type</th><th>Purpose</th><th>Date</th><th>Time</th><th>Status</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="report-footer">
+    NEU Library Visitor Log System · New Era University · Printed ${new Date().toLocaleDateString()}
+  </div>
+  <script>window.onload = () => window.print();<\/script>
+</body>
+</html>`);
+  win.document.close();
+}
+
+function printReport() { exportPDF(); }
+
+function esc(s){if(s==null)return"";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+(async () => {
+  
+  if (window.location.hash.includes("access_token")) {
+    const hash   = window.location.hash;
+    const params = new URLSearchParams(hash.replace("#","?"));
+    const token  = params.get("access_token");
+    if (token) {
+      history.replaceState(null,"",window.location.pathname);
+      const r = await fetch(`${SB_URL}/auth/v1/user`,{ headers:{ apikey:SB_KEY, Authorization:`Bearer ${token}` } });
+      if (r.ok) {
+        const u = await r.json();
+        
+        if (!isAdminAllowed(u.email)) {
+          showAccessDenied(u.email);
+          return;
+        }
+        sessionStorage.setItem("admin_logged_in","true");
+        sessionStorage.setItem("admin_email",u.email||"");
+        sessionStorage.setItem("admin_token",token);
+        showDash(u.email||"", token);
+        return;
+      }
+    }
+  }
+  
+  const stored = sessionStorage.getItem("admin_logged_in");
+  const email  = sessionStorage.getItem("admin_email");
+  const token  = sessionStorage.getItem("admin_token");
+  if (stored && email) {
+    
+    if (!isAdminAllowed(email)) {
+      sessionStorage.clear();
+      showAccessDenied(email);
+      return;
+    }
+    showDash(email, token);
+  } else {
+    document.getElementById("notAuth").classList.add("show");
+  }
+})();
+
+function showAccessDenied(email) {
+  document.getElementById("notAuth").classList.add("show");
+  document.getElementById("notAuth").innerHTML = `
+    <div class="not-auth-card">
+      <div style="font-size:48px;margin-bottom:16px">🚫</div>
+      <h2 style="color:#e53e3e;margin-bottom:8px">Access Denied</h2>
+      <p style="margin-bottom:8px"><strong>${email || "This account"}</strong> is not authorized to access the admin dashboard.</p>
+      <p style="margin-bottom:24px;font-size:13px;color:#8aa8a8">Only designated library administrators can access this page.</p>
+      <a href="index.html" style="display:inline-block;background:#0a6e6e;color:white;padding:12px 24px;border-radius:50px;text-decoration:none;font-weight:700;font-size:14px">← Back to Kiosk</a>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

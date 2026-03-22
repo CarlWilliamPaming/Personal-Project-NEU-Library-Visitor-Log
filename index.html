@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEU Library — Visitor Log System</title>
+  <link rel="icon" type="image/png" href="neu-logo.png">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-bg">
+    <img src="neu-university.jpg" alt="NEU Campus" class="welcome-campus-img"
+         onerror="this.style.display='none'" />
+    <div class="welcome-overlay-grad"></div>
+  </div>
+  <div class="welcome-content">
+    <div class="welcome-top">
+      <img src="neu-logo.png" alt="NEU Logo" class="welcome-logo"
+           onerror="this.style.display='none'" />
+      <span class="welcome-uni-name">New Era University</span>
+    </div>
+    <div class="welcome-center">
+      <div class="welcome-tag">📚 Library Management System</div>
+      <h1 class="welcome-heading">
+        Welcome to the<br><em>NEU Library</em>
+      </h1>
+      <p class="welcome-sub">
+        Your gateway to knowledge, research, and learning.<br>
+        Please log your visit before entering the library.
+      </p>
+      <button class="welcome-enter-btn" onclick="goToKiosk()">
+        Proceed to Check-in
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <div class="welcome-bottom">
+      <span>📍 No. 9 Central Ave, New Era, Quezon City</span>
+      <span class="welcome-sep">·</span>
+      <span>(02) 8981 4221</span>
+      <span class="welcome-sep">·</span>
+      <button class="welcome-admin-link" onclick="showAdminPage()">Admin Access</button>
+    </div>
+  </div>
+  <div class="welcome-dots">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<div id="screen-kiosk" class="screen">
+  <div class="kiosk-screen-bg"></div>
+  <div class="kiosk-screen-wrap">
+
+    <div class="kiosk-stats-strip">
+      <div class="kiosk-stat-item">
+        <span class="ksi-num" id="stat-today">—</span>
+        <span class="ksi-label">Today</span>
+      </div>
+      <div class="ksi-divider"></div>
+      <div class="kiosk-stat-item">
+        <span class="ksi-num" id="stat-week">—</span>
+        <span class="ksi-label">This Week</span>
+      </div>
+      <div class="ksi-divider"></div>
+      <div class="kiosk-stat-item">
+        <span class="ksi-num" id="stat-month">—</span>
+        <span class="ksi-label">This Month</span>
+      </div>
+      <div class="ksi-divider"></div>
+      <div class="kiosk-stat-item">
+        <span class="ksi-num" id="stat-total">—</span>
+        <span class="ksi-label">Total</span>
+      </div>
+    </div>
+
+    <div class="kiosk-card">
+      <div class="kiosk-card-header">
+        <div class="kiosk-card-title-row">
+          <div>
+            <h2 class="kiosk-card-title">Check-in</h2>
+            <p class="kiosk-card-sub">Sign in to log your library visit</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="kiosk-card-body">
+        <div id="kiosk-logged-in" class="kiosk-loggedin hidden">
+          <div class="kiosk-loggedin-row">
+            <span class="kiosk-loggedin-dot"></span>
+            <span class="kiosk-loggedin-text">Signed in as <strong id="kiosk-email-display"></strong></span>
+          </div>
+          <button class="kiosk-proceed-btn" onclick="proceedAfterLogin()">
+            Proceed to Check-in
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+          <button class="kiosk-signout-link" onclick="clearVisitorSession()">Sign out ×</button>
+        </div>
+
+        <div id="kiosk-default-state">
+          <button class="kiosk-google-btn" onclick="signInVisitor()">
+            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Continue with Google (@neu.edu.ph)
+          </button>
+
+          <div class="kiosk-or-row">
+            <span class="kiosk-or-line"></span>
+            <span class="kiosk-or-text">or</span>
+            <span class="kiosk-or-line"></span>
+          </div>
+
+          <button class="kiosk-manual-btn" onclick="goToForm()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Fill in Entry Form Manually
+          </button>
+        </div>
+      </div>
+
+      <div class="kiosk-card-footer">
+        New Era University · Library Management System
+      </div>
+    </div>
+
+    <div class="kiosk-admin-card" onclick="showAdminPage()">
+      <div class="kiosk-admin-card-left">
+        <div class="kiosk-admin-icon">🛡️</div>
+        <div>
+          <div class="kiosk-admin-title">Library Administrator</div>
+          <div class="kiosk-admin-sub">Access the admin dashboard, records &amp; reports</div>
+        </div>
+      </div>
+      <div class="kiosk-admin-arrow">→</div>
+    </div>
+
+    <div class="kiosk-screen-actions">
+      <button class="kiosk-back-btn" onclick="goToWelcome()">← Back to Welcome</button>
+    </div>
+
+    <div id="kiosk-success" class="kiosk-success"></div>
+
+  </div>
+</div>
+
+<div id="screen-form" class="screen">
+  <div class="form-screen-bg"></div>
+
+  <div class="form-screen-header">
+    <button class="form-back-btn" onclick="goToKiosk()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </button>
+    <div class="form-screen-brand">
+      <img src="neu-logo.png" alt="NEU" class="form-screen-logo" onerror="this.style.display='none'" />
+      <div>
+        <div class="form-screen-title">NEU Library</div>
+        <div class="form-screen-sub">Visitor Entry Form</div>
+      </div>
+    </div>
+    <div style="width:80px"></div>
+  </div>
+
+  <div class="form-screen-body">
+    <div class="entry-form-card">
+      <div class="entry-form-card-header">
+        <span class="entry-form-step">STEP 1 OF 1</span>
+        <h2>Visitor Information</h2>
+        <p>Please complete all required fields to log your visit</p>
+      </div>
+
+      <form id="visitorForm" class="entry-form">
+
+        <div class="ef-row">
+          <div class="ef-group">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="v-name" placeholder="e.g. Juan dela Cruz" required />
+          </div>
+          <div class="ef-group">
+            <label>User Type <span class="req">*</span></label>
+            <select id="v-usertype" required>
+              <option value="">Select type</option>
+              <option value="Student">Student</option>
+              <option value="Faculty">Faculty</option>
+              <option value="Staff">Staff</option>
+              <option value="Guest">Guest</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ef-row">
+          <div class="ef-group">
+            <label>College / Program</label>
+            <select id="v-program">
+              <option value="">Select college or program</option>
+              <optgroup label="── College of Accountancy">
+                <option value="BS Accountancy">BS Accountancy</option>
+                <option value="BS Accounting Information System">BS Accounting Information System</option>
+              </optgroup>
+              <optgroup label="── College of Agriculture">
+                <option value="BS Agriculture">BS Agriculture</option>
+              </optgroup>
+              <optgroup label="── College of Arts and Sciences">
+                <option value="BA Economics">BA Economics</option>
+                <option value="BA Political Science">BA Political Science</option>
+                <option value="BS Biology">BS Biology</option>
+                <option value="BS Psychology">BS Psychology</option>
+                <option value="Bachelor of Public Administration">Bachelor of Public Administration</option>
+              </optgroup>
+              <optgroup label="── College of Business Administration">
+                <option value="BSBA Major in Financial Management">BSBA — Financial Management</option>
+                <option value="BSBA Major in Human Resource Development Management">BSBA — Human Resource Development Management</option>
+                <option value="BSBA Major in Legal Management">BSBA — Legal Management</option>
+                <option value="BSBA Major in Marketing Management">BSBA — Marketing Management</option>
+                <option value="BS Entrepreneurship">BS Entrepreneurship</option>
+                <option value="BS Real Estate Management">BS Real Estate Management</option>
+              </optgroup>
+              <optgroup label="── College of Communication">
+                <option value="BA Broadcasting">BA Broadcasting</option>
+                <option value="BA Communication">BA Communication</option>
+                <option value="BA Journalism">BA Journalism</option>
+              </optgroup>
+              <optgroup label="── College of Informatics and Computing Studies">
+                <option value="Bachelor of Library and Information Science">Bachelor of Library and Information Science</option>
+                <option value="BS Computer Science">BS Computer Science</option>
+                <option value="BS EMC — Digital Animation Technology">BS EMC — Digital Animation Technology</option>
+                <option value="BS EMC — Game Development">BS EMC — Game Development</option>
+                <option value="BS Information Technology">BS Information Technology</option>
+                <option value="BS Information System">BS Information System</option>
+              </optgroup>
+              <optgroup label="── College of Criminology">
+                <option value="BS Criminology">BS Criminology</option>
+              </optgroup>
+              <optgroup label="── College of Education">
+                <option value="Bachelor of Elementary Education">Bachelor of Elementary Education</option>
+                <option value="BEEd — Preschool Education">BEEd — Preschool Education</option>
+                <option value="BEEd — Special Education">BEEd — Special Education</option>
+                <option value="BSEd — Music, Arts, and Physical Education">BSEd — Music, Arts, and PE</option>
+                <option value="BSEd — English">BSEd — English</option>
+                <option value="BSEd — Filipino">BSEd — Filipino</option>
+                <option value="BSEd — Mathematics">BSEd — Mathematics</option>
+                <option value="BSEd — Science">BSEd — Science</option>
+                <option value="BSEd — Social Studies">BSEd — Social Studies</option>
+                <option value="BSEd — Technology and Livelihood Education">BSEd — TLE</option>
+              </optgroup>
+              <optgroup label="── Faculty / Staff">
+                <option value="Faculty">Faculty</option>
+                <option value="Administrative Staff">Administrative Staff</option>
+                <option value="Library Staff">Library Staff</option>
+              </optgroup>
+              <optgroup label="── Other">
+                <option value="Guest / Visitor">Guest / Visitor</option>
+                <option value="Others">Others</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="ef-group">
+            <label>Institutional Email <span class="req">*</span></label>
+            <input type="email" id="v-email" placeholder="yourname@neu.edu.ph" required />
+          </div>
+        </div>
+
+        <div class="ef-group">
+          <label>Purpose of Visit <span class="req">*</span></label>
+          <div class="reason-grid">
+            <label class="reason-chip"><input type="radio" name="reason" value="Research" /><span>📚 Research</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Studying" /><span>✏️ Studying</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Borrowing Books" /><span>📖 Borrow Books</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Returning Books" /><span>↩️ Return Books</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Thesis Writing" /><span>📝 Thesis Writing</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Group Study" /><span>👥 Group Study</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Internet Use" /><span>💻 Internet Use</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Photocopying" /><span>🖨️ Photocopying</span></label>
+            <label class="reason-chip"><input type="radio" name="reason" value="Others" /><span>📌 Others</span></label>
+          </div>
+        </div>
+
+        <div id="form-msg" class="form-msg hidden"></div>
+
+        <button type="submit" class="btn-checkin" id="submitBtn">
+          <span id="submitText">✓ Log My Visit</span>
+          <span id="submitSpinner" class="spinner hidden"></span>
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<div id="screen-welcome-neu" class="screen">
+  <div class="welcome-bg">
+    <div class="welcome-overlay-grad"></div>
+  </div>
+  <div class="welcome-content">
+    <div class="welcome-top">
+      <img src="neu-logo.png" alt="NEU Logo" class="welcome-logo" onerror="this.style.display='none'" />
+      <span class="welcome-uni-name">New Era University</span>
+    </div>
+    <div class="welcome-center">
+      <div class="welcome-tag">📚 Library Management System</div>
+      <h1 class="welcome-heading">Welcome to the<br><em>NEU Library</em></h1>
+      <p class="welcome-sub" id="wn-sub">Checking your visitor profile…</p>
+      <button class="welcome-enter-btn" id="wn-proceed-btn" onclick="proceedFromWelcomeNeu()" style="display:none">
+        Proceed
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <div class="wn-loading" id="wn-loading">
+        <div class="wn-spinner"></div>
+        <span>Checking your profile…</span>
+      </div>
+    </div>
+    <div class="welcome-bottom">
+      <button class="welcome-admin-link" onclick="goToKiosk()">← Back to Kiosk</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-welcome-back" class="screen">
+  <div class="welcome-bg">
+    <div class="welcome-overlay-grad" style="background:linear-gradient(to bottom,rgba(7,85,85,.65) 0%,rgba(10,110,110,.45) 45%,rgba(7,85,85,.85) 100%)"></div>
+  </div>
+  <div class="welcome-content">
+    <div class="welcome-top">
+      <img src="neu-logo.png" alt="NEU Logo" class="welcome-logo" onerror="this.style.display='none'" />
+      <span class="welcome-uni-name">New Era University</span>
+    </div>
+    <div class="welcome-center">
+      <div class="welcome-tag">👋 Welcome Back</div>
+      <h1 class="welcome-heading">Welcome Back to<br><em>NEU Library</em></h1>
+      <p class="welcome-sub" id="wb-name-display">Great to see you again!</p>
+      <p class="welcome-sub" style="font-size:15px;opacity:.8;margin-top:-8px">Just tell us why you're here today.</p>
+      <button class="welcome-enter-btn" onclick="showScreen('screen-returning')">
+        Proceed to Check-in
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <div class="welcome-bottom">
+      <button class="welcome-admin-link" onclick="goToKiosk()">← Back to Kiosk</button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-returning" class="screen">
+  <div class="form-screen-bg"></div>
+  <div class="form-screen-header">
+    <button class="form-back-btn" onclick="showScreen('screen-welcome-back')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </button>
+    <div class="form-screen-brand">
+      <img src="neu-logo.png" alt="NEU" class="form-screen-logo" onerror="this.style.display='none'" />
+      <div>
+        <div class="form-screen-title">NEU Library</div>
+        <div class="form-screen-sub">Returning Visitor</div>
+      </div>
+    </div>
+    <div style="width:80px"></div>
+  </div>
+  <div class="form-screen-body">
+    <div class="entry-form-card">
+      <div class="entry-form-card-header">
+        <span class="entry-form-step">RETURNING VISITOR</span>
+        <h2 id="ret-greeting">Welcome back!</h2>
+        <p>Select your purpose of visit to log your check-in</p>
+      </div>
+      <form id="returningForm" class="entry-form">
+        <div class="ef-group">
+          <label>Purpose of Visit <span class="req">*</span></label>
+          <div class="reason-grid">
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Research" /><span>📚 Research</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Studying" /><span>✏️ Studying</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Borrowing Books" /><span>📖 Borrow Books</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Returning Books" /><span>↩️ Return Books</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Thesis Writing" /><span>📝 Thesis Writing</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Group Study" /><span>👥 Group Study</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Internet Use" /><span>💻 Internet Use</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Photocopying" /><span>🖨️ Photocopying</span></label>
+            <label class="reason-chip"><input type="radio" name="ret-reason" value="Others" /><span>📌 Others</span></label>
+          </div>
+        </div>
+        <div id="ret-form-msg" class="form-msg hidden"></div>
+        <button type="submit" class="btn-checkin" id="retSubmitBtn">
+          <span id="retSubmitText">✓ Log My Visit</span>
+          <span id="retSubmitSpinner" class="spinner hidden"></span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="screen-admin" class="screen">
+
+  <div id="adminLoginWrap" class="admin-login-page">
+    <div class="admin-login-card">
+      <div class="admin-login-header">
+        <img src="neu-logo.png" alt="NEU Logo" class="form-logo" onerror="this.style.display='none'" />
+        <h2>Admin Login</h2>
+        <p>Authorized library personnel only</p>
+      </div>
+      <div class="admin-login-body">
+        <div id="login-msg" class="form-msg hidden"></div>
+
+        <button id="googleLoginBtn" class="btn-google" onclick="signInWithGoogle()">
+          <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="admin-or-row">
+          <span class="admin-or-line"></span>
+          <span class="admin-or-text">or enter email manually</span>
+          <span class="admin-or-line"></span>
+        </div>
+
+        <div class="admin-email-label">Administrator Email</div>
+        <input type="email" id="adminEmailInput"
+               class="admin-email-input"
+               placeholder="yourname@neu.edu.ph" />
+        <button class="btn-admin-continue" onclick="checkAdminEmail()">
+          Continue →
+        </button>
+
+        <div class="admin-login-divider"></div>
+        <button class="btn-back-kiosk" onclick="goToWelcome()">← Back to Welcome</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminDashboard" class="dashboard hidden">
+    <div class="dashboard-header">
+      <div class="dashboard-header-left">
+        <img src="neu-logo.png" alt="NEU" class="dash-logo" onerror="this.style.display='none'" />
+        <div>
+          <h2>Admin Dashboard</h2>
+          <p id="admin-welcome">Welcome back!</p>
+        </div>
+      </div>
+      <div class="dashboard-header-right">
+        <button class="btn-back-kiosk" onclick="goToWelcome()">← Home</button>
+        <button class="btn-logout" id="logoutBtn">Sign Out</button>
+      </div>
+    </div>
+    <div class="dash-stats">
+      <div class="dash-stat">
+        <div class="dash-stat-icon">📅</div>
+        <span class="dash-stat-num" id="d-today">—</span>
+        <span class="dash-stat-label">Today</span>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-icon">📆</div>
+        <span class="dash-stat-num" id="d-week">—</span>
+        <span class="dash-stat-label">This Week</span>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-icon">🗓️</div>
+        <span class="dash-stat-num" id="d-month">—</span>
+        <span class="dash-stat-label">This Month</span>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-icon">👥</div>
+        <span class="dash-stat-num" id="d-total">—</span>
+        <span class="dash-stat-label">All Time</span>
+      </div>
+    </div>
+    <div class="dash-controls">
+      <input type="text" id="adminSearch" placeholder="Search name, email, program..." class="search-input" />
+      <select id="adminDateQuick" class="filter-select">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+      </select>
+      <input type="date" id="adminDateFrom" class="filter-select" title="From" />
+      <input type="date" id="adminDateTo"   class="filter-select" title="To" />
+      <button class="btn-primary" onclick="loadAdminRecords()">Filter</button>
+      <button class="btn-teal-outline" onclick="exportPDF()">⬇ Export PDF</button>
+      <button class="btn-teal-outline" onclick="printReport()">🖨 Print</button>
+    </div>
+    <div class="table-wrap">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Name</th><th>Program / Dept.</th><th>Email</th>
+            <th>User Type</th><th>Purpose</th><th>Date</th><th>Time</th>
+            <th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminRecordsBody">
+          <tr><td colspan="10" class="loading-row">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-row" id="adminPagination"></div>
+  </div>
+
+</div>
+
+<div id="blocked-popup" class="blocked-overlay">
+  <div class="blocked-modal">
+    <div class="blocked-icon">🚫</div>
+    <h3 class="blocked-title">Account Blocked</h3>
+    <p class="blocked-msg">Your account has been blocked by the administrator. You cannot access the library system.</p>
+    <p class="blocked-sub">Please contact the library staff for assistance.</p>
+    <button class="blocked-btn" onclick="closeBlockedPopup()">OK, I understand</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
